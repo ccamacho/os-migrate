@@ -2,7 +2,7 @@ name: consistency-functional
 on:
   push:
     paths-ignore:
-      - 'docs/**'
+    -   'docs/**'
   pull_request:
 
 jobs:
@@ -17,12 +17,12 @@ jobs:
       matrix:
         python-version: [3.7]
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+    -   uses: actions/checkout@v2
+    -   name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+    -   name: Install dependencies
         run: |
           sudo locale-gen en_US.UTF-8
           sudo dpkg-reconfigure locales
@@ -33,20 +33,20 @@ jobs:
           sudo apt update -y
           sudo apt install build-essential findutils -y
           sudo apt install podman -y
-      - name: Print podman version
+    -   name: Print podman version
         run: |
           podman -v
-      - name: Configure podman to use cgroupfs as cgroup manager
+    -   name: Configure podman to use cgroupfs as cgroup manager
         run: |
           mkdir -p ~/.config/containers
           echo 'cgroup_manager = "cgroupfs"' > ~/.config/containers/libpod.conf
-      - name: Log into GitHub Container Registry
+    -   name: Log into GitHub Container Registry
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | \
             podman login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-      - id: file_changes
+    -   id: file_changes
         uses: trilom/file-changes-action@v1.2.4
-      - name: Build or reuse the toolbox container image
+    -   name: Build or reuse the toolbox container image
         run: |
           # The following array defines the expressions that
           # when matching the container image for the toolbox
@@ -66,7 +66,7 @@ jobs:
             done
           done
           REUSE_TOOLBOX=$REUSE NO_VAGRANT=1 make toolbox-build
-      - name: Run all the tests non OpenStack dependant
+    -   name: Run all the tests non OpenStack dependant
         run: |
           ./toolbox/run make test-fast
 
@@ -81,7 +81,7 @@ jobs:
       rabbitmq:
         image: rabbitmq:latest
         ports:
-          - 5672:5672
+        -   5672:5672
         options: >-
           --health-cmd "rabbitmqctl node_health_check"
           --health-interval 10s
@@ -93,19 +93,19 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_ALLOW_EMPTY_PASSWORD: true
         ports:
-          - 3306:3306
+        -   3306:3306
         options: >-
           --health-cmd="mysqladmin ping"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+    -   uses: actions/checkout@v2
+    -   name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+    -   name: Install dependencies
         run: |
           sudo locale-gen en_US.UTF-8
           sudo dpkg-reconfigure locales
@@ -125,7 +125,7 @@ jobs:
           sudo python -m pip install --upgrade pip
           sudo python -m pip install --upgrade virtualenv
           sudo python -m pip install --upgrade setuptools
-      - name: Verify MySQL connection from container
+    -   name: Verify MySQL connection from container
         run: >-
           mysql \
             --host 127.0.0.1 \
@@ -148,7 +148,7 @@ jobs:
       # In this case we configure the database to point to the external
       # database container and we mock a dummy service called "mysql"
       # to trick stack.sh and not fail.
-      - name: Create a dummy MySQL service to trick stack.sh
+    -   name: Create a dummy MySQL service to trick stack.sh
         run: |
           sudo tee /usr/mock.sh > /dev/null <<'EOF'
           sleep 3600;
@@ -170,7 +170,7 @@ jobs:
       # there is a script inside devstack that checks to ensure rabbit is
       # enabled.  because we're using rabbit in a container and devstack cannot
       # manage it, we mock a service so it won't fail.
-      - name: Create a dummy rabbit service to trick devstack/lib/rpc_backend
+    -   name: Create a dummy rabbit service to trick devstack/lib/rpc_backend
         run: |
           sudo tee /usr/mock.sh > /dev/null <<'EOF'
           sleep 3600;
@@ -189,17 +189,17 @@ jobs:
           sudo systemctl start rabbit.service
           sudo systemctl restart rabbit.service
           sudo systemctl status rabbit.service
-      - name: Configure podman to use cgroupfs as cgroup manager
+    -   name: Configure podman to use cgroupfs as cgroup manager
         run: |
           mkdir -p ~/.config/containers
           echo 'cgroup_manager = "cgroupfs"' > ~/.config/containers/libpod.conf
-      - name: Log into GitHub Container Registry
+    -   name: Log into GitHub Container Registry
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | \
             podman login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-      - id: file_changes
+    -   id: file_changes
         uses: trilom/file-changes-action@v1.2.4
-      - name: Build or reuse the toolbox container image
+    -   name: Build or reuse the toolbox container image
         run: |
           # The following array defines the expressions that
           # when matching the container image for the toolbox
@@ -221,15 +221,15 @@ jobs:
           REUSE_TOOLBOX=$REUSE NO_VAGRANT=1 make toolbox-build
       # We're hitting filesystem ownership issue on some GH Actions workers:
       # https://ubuntuforums.org/showthread.php?t=2406453
-      - name: Make sure filesystem ownership is correct
+    -   name: Make sure filesystem ownership is correct
         run: |
           set -x
           sudo chown root:root /
           sudo chown root:root /bin
-      - name: Clone devstack
+    -   name: Clone devstack
         run: |
           git clone https://opendev.org/openstack/devstack
-      - name: Configure devstack
+    -   name: Configure devstack
         run: |
           DIR=$(pwd)
           cd devstack
@@ -280,32 +280,32 @@ jobs:
           sudo ./tools/create-stack-user.sh
           sudo mv $DIR/devstack /opt/stack/devstack
           sudo chown -R stack: /opt/stack/devstack
-      - name: Start devstack
+    -   name: Start devstack
         run: |
           sudo -iu stack bash -c 'cd /opt/stack/devstack; ./stack.sh'
-      - name: Get debug data
+    -   name: Get debug data
         if: failure()
         run: |
           echo ">>> Journal logs"
           sudo journalctl --no-pager
-      - name: See "systemctl status placement-api.service" for details.
+    -   name: See "systemctl status placement-api.service" for details.
         if: failure()
         run: |
           sudo systemctl status placement-api.service
-      - name: See "journalctl -xe" for details.
+    -   name: See "journalctl -xe" for details.
         if: failure()
         run: |
           sudo journalctl -xe
-      - name: Run sanity checks
+    -   name: Run sanity checks
         run: |
           echo "- Get network and routers list"
           openstack --os-cloud devstack-admin --os-region RegionOne network list
           openstack --os-cloud devstack-admin --os-region RegionOne router list
-      - name: Check keystone
+    -   name: Check keystone
         run: |
           echo "- Get endpoints"
           openstack --os-cloud devstack-admin --os-region RegionOne endpoint list
-      - name: Connect functional tests to devstack
+    -   name: Connect functional tests to devstack
         run: |
           cp /etc/openstack/clouds.yaml tests/clouds.yaml && \
           ./toolbox/run ./scripts/auth-from-clouds.sh \
@@ -319,6 +319,6 @@ jobs:
               --dst devstack-admin \
               > tests/auth_admin.yml && \
           rm tests/clouds.yaml
-      - name: Run functional tests
+    -   name: Run functional tests
         run: |
           ./toolbox/run make test-func

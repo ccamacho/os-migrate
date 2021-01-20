@@ -1,35 +1,34 @@
----
 name: docs-build
 on:
   push:
     branches:
-      - main
+    -   main
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Use checkout v2 with all git log available
+    -   name: Use checkout v2 with all git log available
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install dependencies
+    -   name: Install dependencies
         run: |
           sudo locale-gen en_US.UTF-8
           sudo dpkg-reconfigure locales
           sudo add-apt-repository -y ppa:projectatomic/ppa
           sudo apt update -y
           sudo apt install podman -y
-      - name: Fetch toolbox image
+    -   name: Fetch toolbox image
         run: |
           REUSE_TOOLBOX=1 NO_VAGRANT=1 make toolbox-build
-      - name: Render the documentation
+    -   name: Render the documentation
         run: |
           ./toolbox/run make docs
-      - uses: actions/upload-artifact@v1
+    -   uses: actions/upload-artifact@v1
         with:
           name: DocumentationHTML
           path: docs/src/_build/html/
-      - name: Commit documentation changes
+    -   name: Commit documentation changes
         run: |
           git clone https://github.com/os-migrate/os-migrate.git \
             --branch gh-pages \
@@ -41,7 +40,7 @@ jobs:
           git config --local user.name "os-migrate bot"
           git add .
           git commit -m "Update documentation" -a || true
-      - name: Push changes
+    -   name: Push changes
         uses: ad-m/github-push-action@master
         with:
           force: true
